@@ -6,7 +6,6 @@ import com.picpaysimplificado.picpaysimplificado.dtos.TransactionDTO;
 import com.picpaysimplificado.picpaysimplificado.repositories.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @Service
-public class transactionService {
+public class TransactionService {
 
     @Autowired
     private UserService userService;
@@ -26,7 +25,10 @@ public class transactionService {
     @Autowired
     private RestTemplate restTemplate;
 
-    public void createdTransaction(TransactionDTO transaction) throws Exception {
+    @Autowired
+    private NotificationService notificationService;
+
+    public Transaction createdTransaction(TransactionDTO transaction) throws Exception {
         User sender = this.userService.findUserById(transaction.senderId());
         User receiver = this.userService.findUserById(transaction.receiverId());
 
@@ -48,8 +50,13 @@ public class transactionService {
         receiver.setBalance(receiver.getBalance().add(transaction.value()));
 
        this. repository.save(transaction1);
-        this.  userService.saveUser(sender);
+        this.userService.saveUser(sender);
         this.userService.saveUser(receiver);
+
+        this.notificationService.sendNotification(sender,"Transação realizada com sucesso");
+        this.notificationService.sendNotification(receiver,"Transação recebida com sucesso");
+
+        return transaction1;
     }
 
     private boolean authorizeTransaction(User sender, BigDecimal value) {
